@@ -5,7 +5,7 @@
 //  Created by Gustavo Ambrozio on 29/11/11.
 //  Copyright (c) 2011 N/A. All rights reserved.
 //
-
+#import <math.h>
 #import "BlockBackground.h"
 
 @implementation BlockBackground
@@ -63,9 +63,38 @@ static BlockBackground *_sharedInstance = nil;
     return self;
 }
 
+- (void)sizeToFill
+{
+    UIInterfaceOrientation o = [self orientation];
+    
+    if(UIInterfaceOrientationIsPortrait(o))
+    {
+        CGRect r = [[UIScreen mainScreen] applicationFrame];
+        
+        CGFloat portraitHeight = [[UIScreen mainScreen] bounds].size.height;
+        CGFloat portraitWidth = [[UIScreen mainScreen] bounds].size.width;
+        
+        CGFloat center_y = (r.size.height / 2) + [self statusBarHeight];
+        CGFloat center_x = (r.size.width / 2);
+        
+        self.bounds = CGRectMake(0, 0, portraitWidth, portraitHeight);        
+        self.center = CGPointMake(center_x, center_y);
+    }
+    else if(UIInterfaceOrientationIsLandscape(o))
+    {
+        CGFloat landscapeHeight = [[UIScreen mainScreen] bounds].size.height;
+        CGFloat landscapeWidth = [[UIScreen mainScreen] bounds].size.width;
+        CGFloat center_y = (landscapeHeight/2);
+        CGFloat center_x = (landscapeWidth / 2);
+        
+        self.bounds = CGRectMake(0, 0, landscapeHeight, landscapeWidth);
+        self.center = CGPointMake(center_x, center_y);
+    }
+}
+
 - (id)init
 {
-    self = [super initWithFrame:[[UIScreen mainScreen] bounds]];
+    self = [super initWithFrame:[[UIScreen mainScreen] applicationFrame]];
     if (self) {
         self.windowLevel = UIWindowLevelStatusBar;
         self.hidden = YES;
@@ -73,6 +102,17 @@ static BlockBackground *_sharedInstance = nil;
         self.backgroundColor = [UIColor colorWithWhite:0.4 alpha:0.5f];
     }
     return self;
+}
+
+- (UIInterfaceOrientation)orientation
+{
+    return [UIApplication sharedApplication].statusBarOrientation;
+}
+
+- (CGFloat)statusBarHeight
+{
+    CGSize statusBarSize =[[UIApplication sharedApplication] statusBarFrame].size;
+    return MIN(statusBarSize.height, statusBarSize.width);
 }
 
 - (void)addToMainWindow:(UIView *)view

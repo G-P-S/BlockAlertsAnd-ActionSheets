@@ -16,4 +16,9 @@
 - (void)reduceAlphaIfEmpty;
 - (void)removeView:(UIView *)view;
 
+- (UIInterfaceOrientation)orientation;
+- (CGFloat)statusBarHeight;
+
+- (void)sizeToFill;
+
 @end
