@@ -7,6 +7,9 @@
 #import "BlockBackground.h"
 
 @implementation BlockActionSheet
+{
+    NSInteger _cancelButtonIndex;
+}
 
 @synthesize view = _view;
 
@@ -69,6 +72,9 @@ static UIFont *buttonFont = nil;
         _title = [title retain];
         _blocks = [[NSMutableArray alloc] init];
         _view = [[UIView alloc] initWithFrame:CGRectZero];
+        _cancelButtonIndex = -1;
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orientationDidChange) name:UIDeviceOrientationDidChangeNotification object:nil];
+
     }
     return self;
 }
@@ -102,6 +108,8 @@ static UIFont *buttonFont = nil;
 
 - (void) dealloc
 {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    
     [_title release];
     [_view release];
     [_blocks release];
@@ -142,6 +150,7 @@ static UIFont *buttonFont = nil;
 - (void)setCancelButtonWithTitle:(NSString *)title block:(void (^)())block
 {
     [self addButtonWithTitle:title color:@"black" block:block atIndex:-1];
+    if(_cancelButtonIndex == -1) _cancelButtonIndex = [_blocks count] - 1;
 }
 
 - (void)addButtonWithTitle:(NSString *)title block:(void (^)())block 
@@ -157,6 +166,7 @@ static UIFont *buttonFont = nil;
 - (void)setCancelButtonWithTitle:(NSString *)title atIndex:(NSInteger)index block:(void (^)())block
 {
     [self addButtonWithTitle:title color:@"black" block:block atIndex:index];
+    if(_cancelButtonIndex == -1) _cancelButtonIndex = [_blocks count] - 1;
 }
 
 - (void)addButtonWithTitle:(NSString *)title atIndex:(NSInteger)index block:(void (^)())block 
@@ -246,7 +256,16 @@ static UIFont *buttonFont = nil;
     [self retain];
 }
 
-- (void)dismissWithClickedButtonIndex:(NSInteger)buttonIndex animated:(BOOL)animated 
+- (void)orientationDidChange
+{
+    // on orientation change, just cancel the alert ... cheap way out 
+    if(_cancelButtonIndex != -1)
+    {
+        [self dismissWithClickedButtonIndex:_cancelButtonIndex animated:YES];
+    }
+}
+
+- (void)dismissWithClickedButtonIndex:(NSInteger)buttonIndex animated:(BOOL)animated
 {
     if (buttonIndex >= 0 && buttonIndex < [_blocks count])
     {
