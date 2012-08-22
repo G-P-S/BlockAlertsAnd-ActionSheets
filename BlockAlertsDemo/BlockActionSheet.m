@@ -73,8 +73,7 @@ static UIFont *buttonFont = nil;
         _blocks = [[NSMutableArray alloc] init];
         _view = [[UIView alloc] initWithFrame:CGRectZero];
         _cancelButtonIndex = -1;
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orientationDidChange) name:UIDeviceOrientationDidChangeNotification object:nil];
-
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orientationDidChange) name:UIDeviceOrientationDidChangeNotification object:self];
     }
     return self;
 }
