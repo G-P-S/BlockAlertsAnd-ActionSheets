@@ -8,7 +8,8 @@
 
 @implementation BlockActionSheet
 {
-    NSInteger _cancelButtonIndex;
+    UILabel *_labelView;
+    id _orientationObserver;
 }
 
 @synthesize view = _view;
@@ -72,35 +73,63 @@ static UIFont *buttonFont = nil;
         _title = [title retain];
         _blocks = [[NSMutableArray alloc] init];
         _view = [[UIView alloc] initWithFrame:CGRectZero];
-        _cancelButtonIndex = -1;
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orientationDidChange) name:UIDeviceOrientationDidChangeNotification object:nil];
-
+        _orientationObserver = nil;
     }
     return self;
 }
 
 - (void)setupTitleLabel
 {
+    BlockBackground* blockBackground = [BlockBackground sharedInstance];
+
     _height = kTopMargin;
-    CGRect frame = [BlockBackground sharedInstance].bounds;
+    CGRect frame = blockBackground.bounds;
     if (_title)
     {
-        CGSize size = [_title sizeWithFont:titleFont
+         CGSize size = [_title sizeWithFont:titleFont
                          constrainedToSize:CGSizeMake(frame.size.width-kBorder*2, 1000)
                              lineBreakMode:UILineBreakModeWordWrap];
         
-        UILabel *labelView = [[UILabel alloc] initWithFrame:CGRectMake(kBorder, _height, frame.size.width-kBorder*2, size.height)];
-        labelView.font = titleFont;
-        labelView.numberOfLines = 0;
-        labelView.lineBreakMode = UILineBreakModeWordWrap;
-        labelView.textColor = [UIColor whiteColor];
-        labelView.backgroundColor = [UIColor clearColor];
-        labelView.textAlignment = UITextAlignmentCenter;
-        labelView.shadowColor = [UIColor blackColor];
-        labelView.shadowOffset = CGSizeMake(0, -1);
-        labelView.text = _title;
-        [_view addSubview:labelView];
-        [labelView release];
+        _labelView = [[UILabel alloc] initWithFrame:CGRectMake(kBorder, _height, frame.size.width-kBorder*2, size.height)];
+        
+        _labelView.font = titleFont;
+        _labelView.numberOfLines = 0;
+        _labelView.lineBreakMode = UILineBreakModeWordWrap;
+        _labelView.textColor = [UIColor whiteColor];
+        _labelView.backgroundColor = [UIColor clearColor];
+        _labelView.textAlignment = UITextAlignmentCenter;
+        _labelView.shadowColor = [UIColor blackColor];
+        _labelView.shadowOffset = CGSizeMake(0, -1);
+        _labelView.text = _title;
+        [_view addSubview:_labelView];
+        
+        _height += size.height + 5;
+    }
+}
+
+- (void)resizeLabel
+{
+    BlockBackground* blockBackground = [BlockBackground sharedInstance];
+    
+    _height = kTopMargin;
+    CGRect frame = blockBackground.bounds;
+    if (_title)
+    {
+        CGSize size = [_title sizeWithFont:titleFont
+                  constrainedToSize:CGSizeMake(frame.size.width-kBorder*2, 1000)
+                      lineBreakMode:UILineBreakModeWordWrap];
+        
+        if(UIInterfaceOrientationIsLandscape(blockBackground.orientation))
+        {
+            _labelView.frame = CGRectMake((kBorder*2), _height, frame.size.width, size.height);
+            
+        }
+        
+        if(UIInterfaceOrientationIsPortrait(blockBackground.orientation))
+        {
+            _labelView.frame = CGRectMake(kBorder, _height, frame.size.width-kBorder*2, size.height);
+            
+        }
         
         _height += size.height + 5;
     }
@@ -108,11 +137,16 @@ static UIFont *buttonFont = nil;
 
 - (void) dealloc
 {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    if(_orientationObserver != nil)
+    {
+        [[NSNotificationCenter defaultCenter] removeObserver:_orientationObserver];
+        _orientationObserver = nil;
+    }
     
-    [_title release];
-    [_view release];
-    [_blocks release];
+    [_title release]; _title = nil;
+    [_view release]; _view = nil;
+    [_blocks release]; _blocks = nil;
+    [_labelView release]; _labelView = nil;
     [super dealloc];
 }
 
@@ -150,7 +184,6 @@ static UIFont *buttonFont = nil;
 - (void)setCancelButtonWithTitle:(NSString *)title block:(void (^)())block
 {
     [self addButtonWithTitle:title color:@"black" block:block atIndex:-1];
-    if(_cancelButtonIndex == -1) _cancelButtonIndex = [_blocks count] - 1;
 }
 
 - (void)addButtonWithTitle:(NSString *)title block:(void (^)())block 
@@ -166,7 +199,6 @@ static UIFont *buttonFont = nil;
 - (void)setCancelButtonWithTitle:(NSString *)title atIndex:(NSInteger)index block:(void (^)())block
 {
     [self addButtonWithTitle:title color:@"black" block:block atIndex:index];
-    if(_cancelButtonIndex == -1) _cancelButtonIndex = [_blocks count] - 1;
 }
 
 - (void)addButtonWithTitle:(NSString *)title atIndex:(NSInteger)index block:(void (^)())block 
@@ -205,15 +237,45 @@ static UIFont *buttonFont = nil;
         
         [_view addSubview:button];
         _height += kButtonHeight + kBorder;
+
     }
+}
+
+- (void)resizeButtons
+{
+    BlockBackground* blockBackground = [BlockBackground sharedInstance];
+
+    NSUInteger i = 1;
+    for (NSArray *block in _blocks)
+    {        
+        UIButton* b = (UIButton *)[_view viewWithTag:i];
+        i++;
+        
+        if(UIInterfaceOrientationIsPortrait(blockBackground.orientation))
+        {            
+            b.frame = CGRectMake(kBorder, _height, blockBackground.bounds.size.width-kBorder*2, kButtonHeight);
+
+        }
+        
+        if(UIInterfaceOrientationIsLandscape(blockBackground.orientation))
+        {
+            b.frame = CGRectMake(kBorder, _height, blockBackground.bounds.size.width- kBorder*2 , kButtonHeight);
+
+        }
+        _height += kButtonHeight + kBorder;
+        
+    }
+
+
 }
 
 - (void)showInView:(UIView *)view
 {
     BlockBackground* blockBackground = [BlockBackground sharedInstance];
     
-    [self setViewTransform:blockBackground forOrientation:blockBackground.orientation];
     [blockBackground sizeToFill];
+
+    [self setViewTransform:blockBackground forOrientation:blockBackground.orientation];
     
     CGRect blockRect = blockBackground.bounds;
     _view.bounds = blockRect;
@@ -223,7 +285,7 @@ static UIFont *buttonFont = nil;
     
     UIImageView *modalBackground = [[UIImageView alloc] initWithFrame:_view.bounds];
     modalBackground.image = background;
-    modalBackground.contentMode = UIViewContentModeScaleToFill;
+    modalBackground.contentMode = UIViewContentModeScaleAspectFill;
     [_view insertSubview:modalBackground atIndex:0];
     [modalBackground release];
     
@@ -254,15 +316,58 @@ static UIFont *buttonFont = nil;
                      }];
     
     [self retain];
-}
+    
+    _orientationObserver = [[NSNotificationCenter defaultCenter] addObserverForName:UIDeviceOrientationDidChangeNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+                        
+        BlockBackground* blockBackground = [BlockBackground sharedInstance];
+        
+        [blockBackground sizeToFill];
+        
+        [self setViewTransform:blockBackground forOrientation:blockBackground.orientation];
+        
+        CGRect blockRect = blockBackground.bounds;
+        _view.bounds = blockRect;
+        
+        CGFloat viewHeight = _height + kTopMargin;
+        
+        [self resizeLabel];
+        [self resizeButtons];
+        
+        CGFloat center_x = blockRect.size.width/2;
+        CGFloat center_finish_y = blockRect.size.height - (viewHeight/2) + (blockBackground.statusBarHeight / 2);
+        CGPoint centerStart = CGPointMake(center_x, blockRect.size.height + viewHeight/2);
+        CGPoint centerFinish = CGPointMake(center_x, blockRect.size.height - viewHeight/2);
+        
+        _view.center = centerStart;
 
-- (void)orientationDidChange
-{
-    // on orientation change, just cancel the alert ... cheap way out 
-    if(_cancelButtonIndex != -1)
-    {
-        [self dismissWithClickedButtonIndex:_cancelButtonIndex animated:YES];
-    }
+        if(UIInterfaceOrientationIsLandscape(blockBackground.orientation))  // Landscape
+        {
+            _view.bounds = CGRectMake(0, 0, blockBackground.bounds.size.width , viewHeight);
+                        
+        }
+        
+        if(UIInterfaceOrientationIsPortrait(blockBackground.orientation))  // Portrait
+        {
+            _view.bounds = CGRectMake(0, 0, blockBackground.bounds.size.width, viewHeight + (kBorder*2));
+        }
+        
+        [UIView animateWithDuration:0.4
+                              delay:0.0
+                            options:UIViewAnimationCurveEaseOut
+                         animations:^{
+                             _view.center = centerFinish;
+                             [BlockBackground sharedInstance].alpha = 1.0f;
+                         } completion:^(BOOL finished) {
+                             [UIView animateWithDuration:0.1
+                                                   delay:0.0
+                                                 options:UIViewAnimationOptionAllowUserInteraction
+                                              animations:^{
+                                                  _view.center = CGPointMake(center_x, center_finish_y + kBounce);
+                                              } completion: nil];
+                         }];
+
+    }];
+    
 }
 
 - (void)dismissWithClickedButtonIndex:(NSInteger)buttonIndex animated:(BOOL)animated
