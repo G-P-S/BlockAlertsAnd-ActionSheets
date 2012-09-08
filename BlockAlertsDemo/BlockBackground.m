@@ -138,7 +138,8 @@ static BlockBackground *_sharedInstance = nil;
     if (self.subviews.count == 1)
     {
         self.alpha = 0.0f;
-        self.userInteractionEnabled = NO;
+//        20120907JY - disabling this user interaction can cause issues with fast taps when showing alerts - thanks for finding Anagd.
+//        self.userInteractionEnabled = NO;
     }
 }
 
