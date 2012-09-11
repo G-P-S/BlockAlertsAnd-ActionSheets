@@ -328,11 +328,13 @@ static UIFont *buttonFont = nil;
         CGRect blockRect = blockBackground.bounds;
         _view.bounds = blockRect;
         
-        CGFloat viewHeight = _height + kTopMargin;
-        
         [self resizeLabel];
         [self resizeButtons];
         
+        CGFloat viewHeight = _height + kTopMargin;
+        
+        _view.bounds = CGRectMake(_view.bounds.origin.x, _view.bounds.origin.y, _view.bounds.size.width, viewHeight + kBorder);
+
         CGFloat center_x = blockRect.size.width/2;
         CGFloat center_finish_y = blockRect.size.height - (viewHeight/2) + (blockBackground.statusBarHeight / 2);
         CGPoint centerStart = CGPointMake(center_x, blockRect.size.height + viewHeight/2);
@@ -340,17 +342,7 @@ static UIFont *buttonFont = nil;
         
         _view.center = centerStart;
 
-        if(UIInterfaceOrientationIsLandscape(blockBackground.orientation))  // Landscape
-        {
-            _view.bounds = CGRectMake(0, 0, blockBackground.bounds.size.width , viewHeight);
-                        
-        }
-        
-        if(UIInterfaceOrientationIsPortrait(blockBackground.orientation))  // Portrait
-        {
-            _view.bounds = CGRectMake(0, 0, blockBackground.bounds.size.width, viewHeight + (kBorder*2));
-        }
-        
+                
         [UIView animateWithDuration:0.4
                               delay:0.0
                             options:UIViewAnimationCurveEaseOut
