@@ -9,7 +9,7 @@
 @implementation BlockActionSheet
 {
     UILabel *_labelView;
-    id _orientationObserver;
+    UIInterfaceOrientation _currentOrientation;
 }
 
 @synthesize view = _view;
@@ -73,7 +73,6 @@ static UIFont *buttonFont = nil;
         _title = [title retain];
         _blocks = [[NSMutableArray alloc] init];
         _view = [[UIView alloc] initWithFrame:CGRectZero];
-        _orientationObserver = nil;
     }
     return self;
 }
@@ -137,12 +136,9 @@ static UIFont *buttonFont = nil;
 
 - (void) dealloc
 {
-    if(_orientationObserver != nil)
-    {
-        [[NSNotificationCenter defaultCenter] removeObserver:_orientationObserver];
-        _orientationObserver = nil;
-    }
-    
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [[UIDevice currentDevice] endGeneratingDeviceOrientationNotifications];
+   
     [_title release]; _title = nil;
     [_view release]; _view = nil;
     [_blocks release]; _blocks = nil;
@@ -269,6 +265,67 @@ static UIFont *buttonFont = nil;
 
 }
 
+- (void)orientationDidChange
+{
+    BlockBackground* blockBackground = [BlockBackground sharedInstance];    
+    [blockBackground sizeToFill];    
+    [self setViewTransform:blockBackground forOrientation:blockBackground.orientation];
+    
+    CGRect blockRect = blockBackground.bounds;
+    _view.bounds = blockRect;
+    
+    [self resizeLabel];
+    [self resizeButtons];
+    
+    CGFloat viewHeight = _height + kTopMargin;
+    
+    _view.bounds = CGRectMake(_view.bounds.origin.x, _view.bounds.origin.y, _view.bounds.size.width, viewHeight + kBorder);
+    
+    CGFloat center_x = blockRect.size.width/2;
+    CGFloat center_finish_y = blockRect.size.height - (viewHeight/2) + (blockBackground.statusBarHeight / 2);
+    CGPoint centerStart = CGPointMake(center_x, blockRect.size.height + viewHeight/2);
+    CGPoint centerFinish = CGPointMake(center_x, blockRect.size.height - viewHeight/2);
+    
+    _view.center = centerStart;
+    
+    UIInterfaceOrientation orientation = [UIApplication sharedApplication].statusBarOrientation;
+    
+    //Ignoring specific orientations
+    if (orientation == UIDeviceOrientationFaceUp || orientation == UIDeviceOrientationFaceDown || orientation == UIDeviceBatteryStateUnknown  || _currentOrientation == orientation)
+    {
+        _view.center = CGPointMake(center_x, center_finish_y + kBounce);
+        return ;
+        
+    }
+    
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(relayoutLayers) object:nil];
+    
+    //Responding only to changes in landscape or portrait
+    _currentOrientation = orientation;
+    
+    if ((UIInterfaceOrientationIsPortrait(_currentOrientation) && UIInterfaceOrientationIsPortrait(orientation)) ||
+        (UIInterfaceOrientationIsLandscape(_currentOrientation) && UIInterfaceOrientationIsLandscape(orientation)))
+    {
+        //still saving the current orientation
+        _currentOrientation = orientation;
+        
+        [UIView animateWithDuration:0.4
+                              delay:0.0
+                            options:UIViewAnimationCurveEaseOut
+                         animations:^{
+                             _view.center = centerFinish;
+                             [BlockBackground sharedInstance].alpha = 1.0f;
+                         } completion:^(BOOL finished) {
+                             [UIView animateWithDuration:0.1
+                                                   delay:0.0
+                                                 options:UIViewAnimationCurveEaseInOut
+                                              animations:^{
+                                                  _view.center = CGPointMake(center_x, center_finish_y + kBounce);
+                                              } completion: nil];
+                         }];
+    }
+}
+
 - (void)showInView:(UIView *)view
 {
     BlockBackground* blockBackground = [BlockBackground sharedInstance];
@@ -317,49 +374,8 @@ static UIFont *buttonFont = nil;
     
     [self retain];
     
-    _orientationObserver = [[NSNotificationCenter defaultCenter] addObserverForName:UIDeviceOrientationDidChangeNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
-                        
-        BlockBackground* blockBackground = [BlockBackground sharedInstance];
-        
-        [blockBackground sizeToFill];
-        
-        [self setViewTransform:blockBackground forOrientation:blockBackground.orientation];
-        
-        CGRect blockRect = blockBackground.bounds;
-        _view.bounds = blockRect;
-        
-        [self resizeLabel];
-        [self resizeButtons];
-        
-        CGFloat viewHeight = _height + kTopMargin;
-        
-        _view.bounds = CGRectMake(_view.bounds.origin.x, _view.bounds.origin.y, _view.bounds.size.width, viewHeight + kBorder);
-
-        CGFloat center_x = blockRect.size.width/2;
-        CGFloat center_finish_y = blockRect.size.height - (viewHeight/2) + (blockBackground.statusBarHeight / 2);
-        CGPoint centerStart = CGPointMake(center_x, blockRect.size.height + viewHeight/2);
-        CGPoint centerFinish = CGPointMake(center_x, blockRect.size.height - viewHeight/2);
-        
-        _view.center = centerStart;
-
-                
-        [UIView animateWithDuration:0.4
-                              delay:0.0
-                            options:UIViewAnimationCurveEaseOut
-                         animations:^{
-                             _view.center = centerFinish;
-                             [BlockBackground sharedInstance].alpha = 1.0f;
-                         } completion:^(BOOL finished) {
-                             [UIView animateWithDuration:0.1
-                                                   delay:0.0
-                                                 options:UIViewAnimationOptionAllowUserInteraction
-                                              animations:^{
-                                                  _view.center = CGPointMake(center_x, center_finish_y + kBounce);
-                                              } completion: nil];
-                         }];
-
-    }];
-    
+    [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orientationDidChange) name:UIDeviceOrientationDidChangeNotification object:nil];
 }
 
 - (void)dismissWithClickedButtonIndex:(NSInteger)buttonIndex animated:(BOOL)animated
