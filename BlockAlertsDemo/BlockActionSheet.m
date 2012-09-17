@@ -289,7 +289,7 @@ static UIFont *buttonFont = nil;
     _view.center = centerStart;
     
     UIInterfaceOrientation orientation = [UIApplication sharedApplication].statusBarOrientation;
-    
+        
     //Ignoring specific orientations
     if (orientation == UIDeviceOrientationFaceUp || orientation == UIDeviceOrientationFaceDown || orientation == UIDeviceBatteryStateUnknown  || _currentOrientation == orientation)
     {
@@ -371,6 +371,8 @@ static UIFont *buttonFont = nil;
                                               _view.center = CGPointMake(center_x, center_finish_y + kBounce);
                                           } completion: nil];
                      }];
+    
+    _currentOrientation = blockBackground.orientation;
     
     [self retain];
     
