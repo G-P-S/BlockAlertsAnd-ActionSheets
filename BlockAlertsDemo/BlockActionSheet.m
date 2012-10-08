@@ -298,7 +298,7 @@ static UIFont *buttonFont = nil;
         
     }
     
-    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(relayoutLayers) object:nil];
+    // [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(relayoutLayers) object:nil];
     
     //Responding only to changes in landscape or portrait
     _currentOrientation = orientation;
