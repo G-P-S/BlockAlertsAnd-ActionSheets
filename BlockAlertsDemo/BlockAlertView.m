@@ -50,8 +50,11 @@ static UIFont *buttonFont = nil;
 {
     if ((self = [super init]))
     {
-        UIWindow *parentView = [BlockBackground sharedInstance];
-        CGRect frame = parentView.bounds;
+        BlockBackground* blockBackground = [BlockBackground sharedInstance];
+        [blockBackground sizeToFill];
+        [self setViewTransform:blockBackground forOrientation:blockBackground.orientation];
+
+        CGRect frame = blockBackground.bounds;
         frame.origin.x = (frame.size.width - background.size.width) * 0.5;
         frame.size.width = background.size.width;
         
@@ -112,6 +115,28 @@ static UIFont *buttonFont = nil;
     [_view release];
     [_blocks release];
     [super dealloc];
+}
+
+- (void)setViewTransform:(UIView*)view forOrientation:(UIInterfaceOrientation)orientation
+{
+    switch(orientation)
+    {
+        case UIInterfaceOrientationPortrait:
+            view.transform = CGAffineTransformMakeRotation(0);
+            break;
+            
+        case UIInterfaceOrientationPortraitUpsideDown:
+            view.transform = CGAffineTransformMakeRotation((-2) *M_PI/2);
+            break;
+            
+        case UIInterfaceOrientationLandscapeRight:
+            view.transform = CGAffineTransformMakeRotation(M_PI/2);
+            break;
+            
+        case UIInterfaceOrientationLandscapeLeft:
+            view.transform = CGAffineTransformMakeRotation((-1) * M_PI/2);
+            break;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
