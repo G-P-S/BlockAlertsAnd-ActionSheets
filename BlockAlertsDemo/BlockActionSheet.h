@@ -30,6 +30,10 @@
 - (void)setDestructiveButtonWithTitle:(NSString *) title atIndex:(NSInteger)index block:(void (^)()) block;
 - (void)addButtonWithTitle:(NSString *) title atIndex:(NSInteger)index block:(void (^)()) block;
 
+// attributed title support
+- (void)addButtonWithAttributedTitle:(NSAttributedString *) title block:(void (^)()) block;
+- (void)addButtonWithAttributedTitle:(NSAttributedString *) title atIndex:(NSInteger)index block:(void (^)()) block;
+
 - (void)showInView:(UIView *)view;
 
 - (NSUInteger)buttonCount;

@@ -87,16 +87,16 @@ static UIFont *buttonFont = nil;
     {
          CGSize size = [_title sizeWithFont:titleFont
                          constrainedToSize:CGSizeMake(frame.size.width-kBorder*2, 1000)
-                             lineBreakMode:UILineBreakModeWordWrap];
+                             lineBreakMode:NSLineBreakByWordWrapping];
         
         _labelView = [[UILabel alloc] initWithFrame:CGRectMake(kBorder, _height, frame.size.width-kBorder*2, size.height)];
         
         _labelView.font = titleFont;
         _labelView.numberOfLines = 0;
-        _labelView.lineBreakMode = UILineBreakModeWordWrap;
+        _labelView.lineBreakMode = NSLineBreakByWordWrapping;
         _labelView.textColor = [UIColor whiteColor];
         _labelView.backgroundColor = [UIColor clearColor];
-        _labelView.textAlignment = UITextAlignmentCenter;
+        _labelView.textAlignment = NSTextAlignmentCenter;
         _labelView.shadowColor = [UIColor blackColor];
         _labelView.shadowOffset = CGSizeMake(0, -1);
         _labelView.text = _title;
@@ -116,7 +116,7 @@ static UIFont *buttonFont = nil;
     {
         CGSize size = [_title sizeWithFont:titleFont
                   constrainedToSize:CGSizeMake(frame.size.width-kBorder*2, 1000)
-                      lineBreakMode:UILineBreakModeWordWrap];
+                      lineBreakMode:NSLineBreakByWordWrapping];
         
         if(UIInterfaceOrientationIsLandscape(blockBackground.orientation))
         {
@@ -151,7 +151,7 @@ static UIFont *buttonFont = nil;
     return _blocks.count;
 }
 
-- (void)addButtonWithTitle:(NSString *)title color:(NSString*)color block:(void (^)())block atIndex:(NSInteger)index
+- (void)addButtonWithTitle:(id)title color:(NSString*)color block:(void (^)())block atIndex:(NSInteger)index
 {
     if (index >= 0)
     {
@@ -202,12 +202,22 @@ static UIFont *buttonFont = nil;
     [self addButtonWithTitle:title color:@"gray" block:block atIndex:index];
 }
 
+- (void)addButtonWithAttributedTitle:(NSAttributedString *) title block:(void (^)()) block
+{
+    [self addButtonWithTitle:title color:@"gray" block:block atIndex:-1];
+}
+
+- (void)addButtonWithAttributedTitle:(NSAttributedString *) title atIndex:(NSInteger)index block:(void (^)()) block
+{
+    [self addButtonWithTitle:title color:@"gray" block:block atIndex:index];
+}
+
 - (void)setupButtons
 {
     NSUInteger i = 1;
     for (NSArray *block in _blocks)
     {
-        NSString *title = [block objectAtIndex:1];
+        id title = [block objectAtIndex:1];
         NSString *color = [block objectAtIndex:2];
         
         UIImage *image = [UIImage imageNamed:[NSString stringWithFormat:@"action-%@-button.png", color]];
@@ -216,9 +226,10 @@ static UIFont *buttonFont = nil;
         UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
         button.frame = CGRectMake(kBorder, _height, _view.bounds.size.width-kBorder*2, kButtonHeight);
         button.titleLabel.font = buttonFont;
-        button.titleLabel.minimumFontSize = 6;
+        button.titleLabel.minimumScaleFactor = 6;
         button.titleLabel.adjustsFontSizeToFitWidth = YES;
-        button.titleLabel.textAlignment = UITextAlignmentCenter;
+        button.titleLabel.textAlignment = NSTextAlignmentCenter;
+        button.titleLabel.lineBreakMode = NSLineBreakByWordWrapping; // enable multi line
         button.titleLabel.shadowOffset = CGSizeMake(0, -1);
         button.backgroundColor = [UIColor clearColor];
         button.tag = i++;
@@ -226,7 +237,15 @@ static UIFont *buttonFont = nil;
         [button setBackgroundImage:image forState:UIControlStateNormal];
         [button setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         [button setTitleShadowColor:[UIColor blackColor] forState:UIControlStateNormal];
-        [button setTitle:title forState:UIControlStateNormal];
+
+        if ([title isKindOfClass:[NSString class]]) {
+            button.titleLabel.font = buttonFont;
+            [button setTitle:title forState:UIControlStateNormal];
+        }
+        else if ([title isKindOfClass:[NSAttributedString class]]) {
+            [button setAttributedTitle:title forState:UIControlStateNormal];
+        }
+        
         button.accessibilityLabel = title;
         
         [button addTarget:self action:@selector(buttonClicked:) forControlEvents:UIControlEventTouchUpInside];
@@ -311,14 +330,14 @@ static UIFont *buttonFont = nil;
         
         [UIView animateWithDuration:0.4
                               delay:0.0
-                            options:UIViewAnimationCurveEaseOut
+                            options:UIViewAnimationOptionCurveEaseOut
                          animations:^{
                              _view.center = centerFinish;
                              [BlockBackground sharedInstance].alpha = 1.0f;
                          } completion:^(BOOL finished) {
                              [UIView animateWithDuration:0.1
                                                    delay:0.0
-                                                 options:UIViewAnimationCurveEaseInOut
+                                                 options:UIViewAnimationOptionCurveEaseInOut
                                               animations:^{
                                                   _view.center = CGPointMake(center_x, center_finish_y + kBounce);
                                               } completion: nil];
@@ -359,7 +378,7 @@ static UIFont *buttonFont = nil;
     
     [UIView animateWithDuration:0.4
                           delay:0.0
-                        options:UIViewAnimationCurveEaseOut
+                        options:UIViewAnimationOptionCurveEaseOut
                      animations:^{
                          _view.center = centerFinish;
                          [BlockBackground sharedInstance].alpha = 1.0f;
@@ -397,7 +416,7 @@ static UIFont *buttonFont = nil;
         center.y += _view.bounds.size.height;
         [UIView animateWithDuration:0.4
                               delay:0.0
-                            options:UIViewAnimationCurveEaseIn
+                            options:UIViewAnimationOptionCurveEaseIn
                          animations:^{
                              _view.center = center;
                              [[BlockBackground sharedInstance] reduceAlphaIfEmpty];
