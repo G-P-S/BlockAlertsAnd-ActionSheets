@@ -225,11 +225,10 @@ static UIFont *buttonFont = nil;
         
         UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
         button.frame = CGRectMake(kBorder, _height, _view.bounds.size.width-kBorder*2, kButtonHeight);
-        button.titleLabel.font = buttonFont;
         button.titleLabel.minimumScaleFactor = 6;
         button.titleLabel.adjustsFontSizeToFitWidth = YES;
         button.titleLabel.textAlignment = NSTextAlignmentCenter;
-        button.titleLabel.lineBreakMode = NSLineBreakByWordWrapping; // enable multi line
+        button.titleLabel.numberOfLines = 0; // enable multi line
         button.titleLabel.shadowOffset = CGSizeMake(0, -1);
         button.backgroundColor = [UIColor clearColor];
         button.tag = i++;
