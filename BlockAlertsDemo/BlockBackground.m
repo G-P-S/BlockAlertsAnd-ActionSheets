@@ -67,28 +67,21 @@ static BlockBackground *_sharedInstance = nil;
 {
     UIInterfaceOrientation o = [self orientation];
     
-    if(UIInterfaceOrientationIsPortrait(o))
+    CGFloat width = [[UIScreen mainScreen] bounds].size.width;
+    CGFloat height = [[UIScreen mainScreen] bounds].size.height;
+    
+    CGFloat center_y = (height / 2);
+    CGFloat center_x = (width / 2);
+    
+    self.center = CGPointMake(center_x, center_y);
+    
+    if (UIInterfaceOrientationIsPortrait(o))
     {
-        CGRect r = [[UIScreen mainScreen] applicationFrame];
-        
-        CGFloat portraitHeight = [[UIScreen mainScreen] bounds].size.height;
-        CGFloat portraitWidth = [[UIScreen mainScreen] bounds].size.width;
-        
-        CGFloat center_y = (r.size.height / 2) + [self statusBarHeight];
-        CGFloat center_x = (r.size.width / 2);
-        
-        self.bounds = CGRectMake(0, 0, portraitWidth, portraitHeight);        
-        self.center = CGPointMake(center_x, center_y);
+        self.bounds = CGRectMake(0, 0, width, height);
     }
-    else if(UIInterfaceOrientationIsLandscape(o))
+    else if (UIInterfaceOrientationIsLandscape(o))
     {
-        CGFloat landscapeHeight = [[UIScreen mainScreen] bounds].size.height;
-        CGFloat landscapeWidth = [[UIScreen mainScreen] bounds].size.width;
-        CGFloat center_y = (landscapeHeight/2);
-        CGFloat center_x = (landscapeWidth / 2);
-        
-        self.bounds = CGRectMake(0, 0, landscapeHeight, landscapeWidth);
-        self.center = CGPointMake(center_x, center_y);
+        self.bounds = CGRectMake(0, 0, height, width);
     }
 }
 
